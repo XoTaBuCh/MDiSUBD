@@ -10,10 +10,15 @@
 Журналирование  действий пользователя.
 
 Список таблиц:
-- Аптекарей
-- Аптек
-- Админов
-- Лекарств
-- Продуктов
-- Клиентов
-- Заказов
+- UserAction
+- User
+- AccountStatus
+- Apothecary
+- Client
+- Pharmacy
+- Product
+- Order
+- OrderStatus
+- Adress
+- Medicine
+- MedicinesType
