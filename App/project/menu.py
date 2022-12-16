@@ -123,6 +123,15 @@ def admin_menu_users():
     return render_template('admin_menu_users.html', users=users, statuses=statuses)
 
 
+@menu.route('/admin/logs/<int:user_id>')
+def admin_menu_users_log(user_id):
+    logs = list(db.session.execute(f"SELECT ua.name, ua.time FROM user_actions ua "
+                                   f"WHERE ua.user_id={user_id};"))
+    db.session.commit()
+
+    return render_template('admin_menu_logs.html', logs=logs)
+
+
 @menu.route('/admin/users', methods=['POST'])
 def admin_menu_users_post():
     user_id = request.form.get('user_id')

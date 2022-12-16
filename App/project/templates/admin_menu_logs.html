@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Logs</title>
+</head>
+<body>
+{% if logs %}
+    <h1>Logs:</h1>
+    <ul>
+        {% for log in logs %}
+            <li>
+                <span>Message: {{ log[0] }}</span>
+                <span>Time: {{ log[1] }}</span>
+
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>
