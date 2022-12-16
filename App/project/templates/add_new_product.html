@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New Product</title>
+</head>
+<body>
+<form method="POST">
+    <label for="name">Name:</label>
+    <input name="name" maxlength="255">
+    <label for="type_id">Type:</label>
+    <select name="type_id">
+        {% for option in options %}
+            <option value="{{ option[0] }}">{{ option[1] }}</option>
+        {% endfor %}
+    </select>
+    <label for="fabricator">Fabricator:</label>
+    <input name="fabricator" maxlength="255">
+    <label for="description">Description:</label>
+    <input name="description" maxlength="255">
+    <label for="amount">Amount:</label>
+    <input type="number" name="amount" min="0" step="1">
+    <label for="price">Price:</label>
+    <input type="number" name="price" min="0" step=".01">
+    <button type="submit">Submit</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Client</title>
+</head>
+<body>
+<nav><button onclick="location.href='/client/shopping_cart';">Cart</button>
+    <button onclick="location.href='/profile';">Profile</button>
+    <button onclick="location.href='/logout';">Logout</button></nav>
+<form>
+    <label for="medicine_search">Search medicine:</label>
+    <input type="search" id="medicine_search" name="search">
+
+    <button type="submit">Search</button>
+</form>
+{% if medicines %}
+    <ul>
+        {% for medicine in medicines %}
+            <li>
+                <a href="/medicine/{{ medicine[0] }}">{{ medicine[1] }}</a>
+                <span>{{ medicine[2] }}</span>
+                <span>{{ medicine[3] }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>

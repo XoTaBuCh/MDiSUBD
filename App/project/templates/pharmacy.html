@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if pharmacy %}
+        {{ pharmacy[0][0] }}
+    {% endif %} </title>
+</head>
+<body>
+{% if pharmacy %}
+    {% if apothecary_flag %}
+        <form method="POST" action="/pharmacy/{{ pharmacy[0][4] }}/edit">
+            <label for="name">Name:</label>
+            <input name="name" value="{{ pharmacy[0][0] }}">
+            <label for="country">Country:</label>
+            <input name="country" value="{{ pharmacy[0][1] }}">
+            <label for="city">City:</label>
+            <input name="city" value="{{ pharmacy[0][2] }}">
+            <label for="street_address">Street address:</label>
+            <input name="street_address" value="{{ pharmacy[0][3] }}">
+            <button type="submit">Submit</button>
+        </form>
+        <button onclick="document.location='/pharmacy/{{ pharmacy[0][4] }}/delete'">Delete pharmacy</button>
+        <button onclick="document.location='/pharmacy/{{ pharmacy[0][4] }}/add_new_product'">Add new product</button>
+        <button onclick="document.location='/pharmacy/{{ pharmacy[0][4] }}/add_existing_product'">Add existing product
+        </button>
+        <button onclick="document.location='/pharmacy/{{ pharmacy[0][4] }}/orders'">Orders</button>
+
+
+    {% else %}
+        <h1>Name: {{ pharmacy[0][0] }}</h1>
+        <p>Country: {{ pharmacy[0][1] }}</p>
+        <p>City: {{ pharmacy[0][2] }}</p>
+        <p>Street address: {{ pharmacy[0][3] }}</p>
+    {% endif %}
+        <button onclick="document.location='/pharmacy/{{ pharmacy[0][4] }}/reviews'">Reviews</button>
+
+{% endif %}
+
+
+{% if products %}
+    <ul>
+        {% for product in products %}
+            <li>
+                <span>Name: {{ product[0] }}</span>
+                <span>Fabricator: {{ product[1] }}</span>
+                <span>Description: {{ product[2] }}</span>
+
+                {% if apothecary_flag %}
+                    <form method="POST">
+                        <input type="hidden" name="product_id" value="{{ product[5] }}">
+                        <input type="number" name="price" min="0" step=".01" value="{{ product[3] }}">
+                        <input type="number" name="amount" min="0" step="1" value="{{ product[4] }}">
+                        <button type="submit">Submit</button>
+                    </form>
+                    <form method="POST" action="/{{ pharmacy[0][4] }}/delete_product">
+                        <input type="hidden" name="product_id" value="{{ product[5] }}">
+                        <button type="submit">Delete product</button>
+                    </form>
+                {% else %}
+                    <span>Price: {{ product[3] }}</span>
+                    <span>Amount: {{ product[4] }}</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>

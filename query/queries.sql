@@ -74,7 +74,7 @@ WHERE status_id = 2 AND EXISTS (SELECT name FROM users WHERE status_id = 3);
 
 -- EXPLAIN запросов
 EXPLAIN SELECT * FROM reviews;
-EXPLAIN (ANALYZE) SELECT * FROM reviews;
+EXPLAIN analyse SELECT * FROM reviews;
 
 -- Получение товров с конца со 2, 20 шт
 SELECT * FROM products ORDER BY id DESC LIMIT 20 OFFSET 2;
@@ -91,3 +91,4 @@ FROM orders;
 SELECT DISTINCT city FROM addresses
 WHERE country = 'Belarus';
 
+CALL insert_client('Abobus', '6845626', 'user9@gmail.com', 'qwerty', CAST (1 AS SMALLINT));

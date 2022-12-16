@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Orders</title>
+</head>
+<body>
+
+{% if active_orders %}
+    <h1>Active orders:</h1>
+    <ul>
+        {% for order in active_orders %}
+            <li>
+                <span>Medicine name: {{ order[1] }}</span>
+                <span>Amount: {{ order[2] }}</span>
+                <span>Price: {{ order[3] }}</span>
+                <form method="POST" action="/pharmacy/{{ pharmacy_id }}/orders/accept">
+                    <input type="hidden" name="product_order_id" value="{{ order[0] }}">
+                    <button type="submit">Accept</button>
+                </form>
+                <form method="POST" action="/pharmacy/{{ pharmacy_id }}/orders/deny">
+                    <input type="hidden" name="product_order_id" value="{{ order[0] }}">
+                    <button type="submit">Deny</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% if other_orders %}
+    <h1>Others orders:</h1>
+    <ul>
+        {% for order in other_orders %}
+            <li>
+                <span>Medicine name: {{ order[0] }}</span>
+                <span>Amount: {{ order[1] }}</span>
+                <span>Price: {{ order[2] }}</span>
+                <span>Status: {{ order[3] }}</span>
+
+            </li>
+        {% endfor %}
+
+    </ul>
+{% endif %}
+</body>
+</html>

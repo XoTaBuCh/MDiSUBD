@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Apothecary Menu</title>
+</head>
+<body>
+<button onclick="document.location='/apothecary/add_pharmacy'">Add pharmacy</button>
+{% if pharmacies %}
+    <h1>Your pharmacies:</h1>
+    <ul>
+        {% for pharmacy in pharmacies %}
+            <li>
+                <a href="/pharmacy/{{ pharmacy[0] }}">{{ pharmacy[1] }}</a>
+
+                <span>Country: {{ pharmacy[2] }}</span>
+                <span>City: {{ pharmacy[3] }}</span>
+                <span>Street address: {{ pharmacy[4] }}</span>
+                <span>Lat: {{ pharmacy[5] }}</span>
+                <span>Lon: {{ pharmacy[6] }}</span>
+
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endif %}
+</body>
+</html>

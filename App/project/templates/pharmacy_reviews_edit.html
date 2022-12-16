@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Review</title>
+</head>
+<body>
+<h1>Yours review:</h1>
+<form method="POST" action="/pharmacy/{{ pharmacy_id }}/reviews/edit">
+    {% if review %}
+        <input type="text" name="message" value="{{ review[0][0] }}">
+    {% else %}
+        <input type="text" name="message" value="">
+    {% endif %}
+    <button type="submit">Submit</button>
+</form>
+</body>
+</html>

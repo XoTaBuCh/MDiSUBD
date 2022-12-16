@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if medicine %}
+        {{ medicine[0][0] }}
+    {% endif %} </title>
+</head>
+<body>
+{% if medicine %}
+    <h1>Name: {{ medicine[0][0] }}</h1>
+    <p>Type: {{ medicine[0][1] }}</p>
+    <p>Fabricator: {{ medicine[0][2] }}</p>
+    <p>Description: {{ medicine[0][3] }}</p>
+{% endif %}
+{% if products %}
+    <ul>
+        {% for product in products %}
+            <li>
+                <a href="/pharmacy/{{ product[3] }}">{{ product[2] }}</a>
+                <span>Amount: {{ product[1] }}</span>
+                <span>Price: {{ product[0] }}</span>
+                {% if client_flag %}
+                    <form method="POST">
+                        <input type="hidden" name="product_id" value="{{ product[3] }}">
+                        <label for="amount">Order:</label>
+                        <input type="number" name="amount" min="1" step="1" max="{{ product[1] }}">
+                        <button type="submit">Submit</button>
+                    </form>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>

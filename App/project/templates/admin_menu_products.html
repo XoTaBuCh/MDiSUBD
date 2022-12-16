@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Products</title>
+</head>
+<body>
+{% if products %}
+    <h1>Products:</h1>
+    <ul>
+        {% for product in products %}
+            <li>
+                <form method="POST">
+                    <span>Pharmacy: {{ product[4] }}</span>
+                    <label for="name">Name:</label>
+                    <input name="name" maxlength="255" value="{{ product[1] }}">
+                    <label for="amount">Amount:</label>
+                    <input type="number" name="amount" min="0" step="1" value="{{ product[2] }}">
+                    <label for="price">Price:</label>
+                    <input type="number" name="price" min="0" step=".01" value="{{ product[3] }}">
+                    <input type="hidden" name="product_id" value="{{ product[0] }}">
+                    <button type="submit">Submit</button>
+                </form>
+                <form method="POST" action="products/delete">
+                    <input type="hidden" name="product_id" value="{{ product[0] }}">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>

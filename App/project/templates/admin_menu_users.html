@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Menu</title>
+</head>
+<body>
+{% if users %}
+    <h1>Users:</h1>
+    <ul>
+        {% for user in users %}
+            <li>
+                <span>Name: {{ user[1] }}</span>
+                <span>Email: {{ user[2] }}</span>
+                <span>Number: {{ user[3] }}</span>
+                <form method="POST">
+                    <input type="hidden" name="user_id" value="{{ user[0] }}">
+                    <label for="status_id">Type:</label>
+                    <select name="status_id">
+                        {% for status in statuses %}
+                            <option value="{{ status[0] }}"
+                                    {% if user[4]==status[0] %}
+                                    selected
+                                    {% endif %}>
+                                {{ status[1] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">Submit</button>
+                </form>
+                <button onclick="document.location='/admin/logs/{{ user[0] }}'">Logs</button>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!-- templates/profile.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+    <form method="POST" action="/profile/edit">
+        <label for="name">Name:</label>
+        <input name="name" maxlength="255" value="{{ user.name }}">
+        <label for="number">Number:</label>
+        <input name="number" maxlength="255" value="{{ user.number }}">
+        <label for="password">Password:</label>
+        <input name="password">
+        <button type="submit">Submit</button>
+    </form>
+    <button onclick="document.location='/profile/delete'">Delete account</button>
+{% endblock %}

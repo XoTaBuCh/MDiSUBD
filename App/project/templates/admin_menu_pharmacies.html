@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin pharmacies</title>
+</head>
+<body>
+{% if pharmacies %}
+    <h1>Pharmacies:</h1>
+    <ul>
+        {% for pharmacy in pharmacies %}
+            <li>
+                <form method="POST">
+                    <label for="name">Name:</label>
+                    <input name="name" value="{{ pharmacy[0] }}">
+                    <label for="country">Country:</label>
+                    <input name="country" value="{{ pharmacy[1] }}">
+                    <label for="city">City:</label>
+                    <input name="city" value="{{ pharmacy[2] }}">
+                    <label for="street_address">Street address:</label>
+                    <input name="street_address" value="{{ pharmacy[3] }}">
+                    <input type="hidden" name="pharmacy_id" value="{{ pharmacy[4] }}">
+                    <button type="submit">Submit</button>
+                </form>
+                <form method="POST" action="pharmacies/delete">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Existing Product</title>
+</head>
+<body>
+<form method="post">
+
+    <label for="">Medicine:</label>
+    <select name="medicine_id">
+        {% for option in options %}
+            <option value="{{ option[0] }}">{{ option[1] }}, {{ option[2] }}</option>
+        {% endfor %}
+    </select>
+    <label for="amount">Amount:</label>
+    <input type="number" name="amount" min="0" step="1">
+    <label for="price">Price:</label>
+    <input type="number" name="price" min="0" step=".01">
+    <button type="submit">Submit</button>
+</form>
+</body>
+</html>

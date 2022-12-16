@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Medicines</title>
+</head>
+<body>
+<form method="POST" action="medicines/add_type">
+    <label for="type_name">Add new type of medicine:</label>
+    <input name="type_name" maxlength="255">
+    <button type="submit">Add</button>
+</form>
+{% if medicines %}
+    <h1>Medicines:</h1>
+    <ul>
+        {% for medicine in medicines %}
+            <li>
+                <form method="POST">
+                    <label for="name">Name:</label>
+                    <input name="name" maxlength="255" value="{{ medicine[1] }}">
+                    <label for="type_id">Type:</label>
+                    <select name="type_id">
+                        {% for option in options %}
+                            <option value="{{ option[0] }}" {% if option[0]==medicine[2] %}
+                                    selected
+                            {% endif %}>{{ option[1] }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="fabricator">Fabricator:</label>
+                    <input name="fabricator" maxlength="255" value="{{ medicine[3] }}">
+                    <label for="description">Description:</label>
+                    <input name="description" maxlength="255" value="{{ medicine[4] }}">
+                    <input type="hidden" name="medicine_id" value="{{ medicine[0] }}">
+                    <button type="submit">Submit</button>
+                </form>
+                <form method="POST" action="medicines/delete">
+                    <input type="hidden" name="medicine_id" value="{{ product[0] }}">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>

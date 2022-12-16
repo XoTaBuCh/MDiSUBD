@@ -2,7 +2,8 @@
 INSERT INTO account_statuses(name) VALUES
 ('Active'),
 ('Banned'),
-('Frozen');
+('Frozen'),
+('Deleted');
 
 INSERT INTO medicine_types(name) VALUES
 ('Pills'),
@@ -16,7 +17,8 @@ INSERT INTO order_statuses(name) VALUES
 ('Active'),
 ('Accepted'),
 ('Denied'),
-('Completed');
+('Completed'),
+('In shopping cart');
 
 INSERT INTO users(name, number, email, password, status_id) VALUES
 ('user1', '+375295115128', 'user1@gmail.com', crypt('User1@', gen_salt('bf')), 1),
@@ -112,11 +114,12 @@ INSERT INTO orders(status_id, client_id, price) VALUES
 (3, 1, 13.11),
 (4, 2, 99.9);
 
-INSERT INTO products_orders(product_id, order_id) VALUES
-(1, 1),
-(23, 2),
-(17, 3),
-(35,4);
+INSERT INTO products_orders(product_id, order_id, amount) VALUES
+(2, 1, 1),
+(1, 1, 1),
+(23, 2, 1),
+(17, 3, 2),
+(35,4, 2);
 
 INSERT INTO reviews(client_id, pharmacy_id, message) VALUES
 (1, 1, 'GOD'),
@@ -128,8 +131,16 @@ INSERT INTO reviews(client_id, pharmacy_id, message) VALUES
 (2, 4, 'bed'),
 (2, 2, 'dad');
 
+
 CREATE INDEX medicines_idx ON medicines(id);
 CREATE INDEX pharmacies_idx ON pharmacies(id);
 CREATE INDEX reviews_idx ON reviews(id);
 CREATE INDEX addresses_idx ON addresses(id);
 
+
+
+
+
+
+CALL insert_client('user9', '+375295115128', 'user48@gmail.com', 'User8@', CAST (1 AS SMALLINT));
+CALL put_in_shopping_cart(1, 2, 1)

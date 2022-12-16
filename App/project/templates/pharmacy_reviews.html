@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reviews</title>
+</head>
+<body>
+{% if client_flag %}
+    <button onclick="document.location='/pharmacy/{{ pharmacy_id }}/reviews/edit'">Edit yours review</button>
+{% endif %}
+
+{% if reviews %}
+    <h1>Reviews:</h1>
+    <ul>
+        {% for review in reviews %}
+            <li>
+                <span>{{ review[0] }}</span>
+                <span>{{ review[1] }}</span>
+                ---------
+                <span>{{ review[2] }}</span>
+            </li>
+        {% endfor %}
+
+    </ul>
+{% else %}
+    <h1>No reviews</h1>
+{% endif %}
+
+
+</body>
+</html>

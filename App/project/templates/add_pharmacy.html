@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Pharmacy</title>
+</head>
+<body>
+<form method="POST">
+    <label for="name">Name:</label>
+    <input name="name" maxlength="255">
+    <label for="country">Country:</label>
+    <input name="country" maxlength="255">
+    <label for="city">City:</label>
+    <input name="city" maxlength="255">
+    <label for="street_address">Street Address:</label>
+    <input name="street_address">
+    <label for="lat">Latitude:</label>
+    <input type="number" name="lat" min="-90" max="90" step=".00001" value="0">
+    <label for="lon">Longitude:</label>
+    <input type="number" name="lon" min="-180" max="180" step=".00001" value="0">
+    <button type="submit">Submit</button>
+</form>
+</body>
+</html>
