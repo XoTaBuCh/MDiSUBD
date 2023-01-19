@@ -402,3 +402,41 @@ CREATE OR REPLACE TRIGGER logging
 AFTER INSERT OR UPDATE OR DELETE ON pharmacies
     FOR EACH ROW EXECUTE PROCEDURE process_pharmacy_logging();
 	
+-- Функция для выполнения триггера логгирования продуктов
+CREATE OR REPLACE FUNCTION process_product_logging() RETURNS TRIGGER AS $logging$
+	Declare user_id integer;
+    BEGIN
+        IF (TG_OP = 'DELETE') THEN
+			SELECT users.id INTO user_id FROM users 
+			JOIN apothecaries ON apothecaries.user_id=users.id
+			JOIN pharmacies ON pharmacies.apothecary_id=apothecaries.id
+			JOIN products ON products.pharmacy_id=pharmacies.id
+			WHERE products.id=OLD.id;
+            INSERT INTO user_actions(user_id, name, time) VALUES (user_id, 'Delete product', now());
+            RETURN OLD;
+        ELSIF (TG_OP = 'UPDATE') THEN
+			SELECT users.id INTO user_id FROM users 
+			JOIN apothecaries ON apothecaries.user_id=users.id
+			JOIN pharmacies ON pharmacies.apothecary_id=apothecaries.id
+			JOIN products ON products.pharmacy_id=pharmacies.id
+			WHERE products.id=NEW.id;
+            INSERT INTO user_actions(user_id, name, time) VALUES (user_id, 'Update product', now());
+            RETURN NEW;
+        ELSIF (TG_OP = 'INSERT') THEN
+			SELECT users.id INTO user_id FROM users 
+			JOIN apothecaries ON apothecaries.user_id=users.id
+			JOIN pharmacies ON pharmacies.apothecary_id=apothecaries.id
+			JOIN products ON products.pharmacy_id=pharmacies.id
+			WHERE products.id=NEW.id;
+            INSERT INTO user_actions(user_id, name, time) VALUES (user_id, 'Insert product', now());
+            RETURN NEW;
+        END IF;
+        RETURN NULL;
+    END;
+$logging$ LANGUAGE plpgsql;
+
+-- Триггер для логирования продуктов
+CREATE OR REPLACE TRIGGER logging
+AFTER INSERT OR UPDATE OR DELETE ON products
+    FOR EACH ROW EXECUTE PROCEDURE process_product_logging();
+	
