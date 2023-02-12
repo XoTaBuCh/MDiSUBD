@@ -1,3 +1,5 @@
+DROP TABLE MyTable;
+-----------
 CREATE TABLE MyTable
 (
     id    NUMBER UNIQUE NOT NULL,
@@ -12,7 +14,7 @@ BEGIN
         INSERT INTO MyTable(id, value)
         VALUES (i, DBMS_RANDOM.RANDOM());
         i := i + 1;
-        EXIT WHEN i > 10000;
+        EXIT WHEN i > 10;
     END LOOP;
 END;
 -------------
@@ -45,6 +47,7 @@ DECLARE
         IS
         NEW_VALUE NUMBER;
         FLAG      NUMBER;
+        invalid_input EXCEPTION;
     BEGIN
         SELECT COUNT(*) INTO FLAG FROM MyTable WHERE MyTable.id = FIND_ID;
         IF FLAG > 0 THEN
@@ -52,10 +55,12 @@ DECLARE
             RETURN 'INSERT INTO MyTable(id, val) VALUES (' || FIND_ID || ', ' ||
                    NEW_VALUE || ');';
         ELSE
-            RETURN 'INSERT INTO MyTable(id, val) VALUES (' || FIND_ID || ', ' ||
-                   DBMS_RANDOM.RANDOM() || ');';
+            RAISE invalid_input;
 
         END IF;
+    EXCEPTION
+        WHEN invalid_input THEN
+        RETURN 'Id doesnt exists';
     END insert_command;
 BEGIN
     DBMS_OUTPUT.put_line(insert_command(1000000));
