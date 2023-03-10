@@ -1,3 +1,6 @@
+DROP TABLE STUDENTS;
+DROP TABLE GROUPS;
+DROP TABLE LOGS;
 CREATE TABLE GROUPS
 (
     ID    NUMBER PRIMARY KEY NOT NULL,
@@ -9,20 +12,19 @@ CREATE TABLE STUDENTS
 (
     ID       NUMBER PRIMARY KEY,
     NAME     VARCHAR2(100),
-    GROUP_ID NUMBER REFERENCES GROUPS (ID)
+    GROUP_ID NUMBER
 );
 --------
+DROP SEQUENCE STUDENTS_SEQ;
+DROP SEQUENCE GROUPS_SEQ;
+
 CREATE SEQUENCE STUDENTS_SEQ
-    START WITH 1
-    INCREMENT BY 1
-    CACHE 10;
+    START WITH 1;
 
 CREATE SEQUENCE GROUPS_SEQ
-    START WITH 1
-    INCREMENT BY 1
-    CACHE 10;
+    START WITH 1;
 
-CREATE TRIGGER before_insert_students_trigger
+CREATE OR REPLACE TRIGGER before_insert_students_trigger
     BEFORE INSERT
     ON STUDENTS
     FOR EACH ROW
@@ -39,7 +41,7 @@ DECLARE
     flag NUMBER;
     name_taken EXCEPTION;
 BEGIN
-    IF :new.ID IS NULL AND INSERTING THEN
+    IF INSERTING THEN
         SELECT GROUPS_SEQ.NEXTVAL INTO :new.ID FROM DUAL;
     END IF;
 
@@ -52,34 +54,46 @@ BEGIN
 END;
 
 INSERT INTO GROUPS(ID, name, C_VAL)
-VALUES (0, 'asfa', 3);
+VALUES (0, 'first', 0);
+INSERT INTO GROUPS(ID, name, C_VAL)
+VALUES (0, 'second', 0);
+INSERT INTO GROUPS(ID, name, C_VAL)
+VALUES (0, 'third', 0);
+INSERT INTO GROUPS(ID, name, C_VAL)
+VALUES (0, 'first', 0);
+
 SELECT *
 FROM GROUPS;
+
+INSERT INTO STUDENTS(name, GROUP_ID)
+VALUES ('ABOBA1', 1);
+INSERT INTO STUDENTS(name, GROUP_ID)
+VALUES ('ABOBA2', 2);
+INSERT INTO STUDENTS(name, GROUP_ID)
+VALUES ('ABOBA3', 3);
+INSERT INTO STUDENTS(name, GROUP_ID)
+VALUES ('ABOBA4', 3);
+
+
+DELETE
+FROM GROUPS
+WHERE ID = 9;
+
+SELECT *
+FROM GROUPS;
+
+SELECT *
+FROM STUDENTS;
 ------------
 CREATE OR REPLACE TRIGGER GROUP_DEL
     BEFORE DELETE
     ON GROUPS
     FOR EACH ROW
-DECLARE
-    PRAGMA AUTONOMOUS_TRANSACTION;
-    recursive INTEGER := 0;
 BEGIN
-    SELECT COUNT(*)
-    INTO recursive
-    FROM user_triggers
-    WHERE trigger_name = 'GROUP_DEL'
-      AND triggering_event = 'DELETE'
-      AND status = 'ENABLED';
-
-    IF recursive = 0 THEN
-        DELETE
-        FROM STUDENTS
-        WHERE GROUP_ID = :OLD.id;
-        COMMIT;
-    END IF;
+    DELETE FROM Students WHERE GROUP_ID = :old.ID;
 END;
 
-
+DROP TRIGGER STUDENT_DEL;
 CREATE OR REPLACE TRIGGER STUDENT_DEL
     BEFORE DELETE
     ON STUDENTS
@@ -137,13 +151,14 @@ BEGIN
         END CASE;
 END;
 ---------
-CREATE OR REPLACE PROCEDURE GO_BACK(restore_time IN TIMESTAMP)
+CREATE OR REPLACE PROCEDURE GO_BACK(restore_time TIMESTAMP)
     IS
     CURSOR s_logs IS
         SELECT *
         FROM LOGS
         WHERE TIME >= restore_time
         ORDER BY TIME DESC;
+    temp NUMBER;
     invalid_log EXCEPTION;
 BEGIN
     FOR log IN s_logs
@@ -156,7 +171,12 @@ BEGIN
                                                      GROUP_ID =log.ST_GROUP_ID
                                                  WHERE ID = log.ST_ID;
                 WHEN log.MESSAGE = 'DELETE'
-                    THEN INSERT INTO STUDENTS VALUES (log.ST_ID_OLD, log.ST_NAME, log.ST_GROUP_ID);
+                    THEN INSERT INTO STUDENTS
+                         VALUES (log.ST_ID_OLD, log.ST_NAME, log.ST_GROUP_ID)
+                         returning STUDENTS.ID into temp;
+                         UPDATE STUDENTS
+                         SET ID=log.ST_ID_OLD
+                         WHERE ID = temp;
                 ELSE raise invalid_log;
                 END CASE;
             DELETE FROM LOGS WHERE TIME = log.TIME;
@@ -169,30 +189,29 @@ BEGIN
     GO_BACK(LOCALTIMESTAMP - offset);
 END GO_BACK_OFFSET;
 
-SELECT *
-FROM STUDENTS;
-DELETE
-FROM LOGS;
-
-INSERT INTO STUDENTS(ID, name, GROUP_ID)
-VALUES (0, 'asfa', 4);
+INSERT INTO STUDENTS(name, GROUP_ID)
+VALUES ('asfa', 1);
 
 UPDATE STUDENTS
-SET ID=3,
-    NAME='gdrst',
+SET NAME='gdrst',
     GROUP_ID=2
-WHERE ID = 4;
+WHERE ID = 11;
 
 DELETE
 FROM STUDENTS
-WHERE ID = 3;
+WHERE ID = 11;
 
+DELETE
+FROM LOGS;
 SELECT *
 FROM LOGS;
+SELECT *
+FROM STUDENTS;
 BEGIN
-    GO_BACK(TO_TIMESTAMP(CURRENT_TIMESTAMP - 45));
+    GO_BACK(TO_TIMESTAMP('10.03.2023 14:40:00'));
 END;
 -----------
+DROP TRIGGER UPDATE_GROUPS;
 CREATE OR REPLACE TRIGGER UPDATE_GROUPS
     AFTER INSERT OR DELETE OR UPDATE
     ON STUDENTS
