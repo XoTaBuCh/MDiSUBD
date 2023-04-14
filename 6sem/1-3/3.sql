@@ -360,6 +360,37 @@ CREATE TABLE fk_table
 );
 
 
+CREATE OR REPLACE PROCEDURE GENERATE_DEPLOY_SCRIPT(schema_to VARCHAR2, schema_from VARCHAR2)
+    AUTHID CURRENT_USER
+    IS
+BEGIN
+    EXECUTE IMMEDIATE 'TRUNCATE TABLE DDL_TABLE';
+    DBMS_OUTPUT.PUT_LINE('-------------');
+
+    PROD_CREATE_LIST(schema_to, schema_from);
+    PROD_DELETE_LIST(schema_to, schema_from);
+    GET_TABLES_ORDER(schema_to);
+
+    FOR script IN (SELECT DDL_SCRIPT
+                   FROM DDL_TABLE
+                   ORDER BY PRIORITY)
+        LOOP
+            DBMS_OUTPUT.PUT_LINE(script.DDL_SCRIPT);
+        END LOOP;
+
+    PROD_PROCEDURE_CREATE(schema_to, schema_from);
+    PROD_PROCEDURE_DELETE(schema_to, schema_from);
+    PROD_PROCEDURE_DELETE_CREATE(schema_to, schema_from);
+    PROD_FUNCTION_CREATE(schema_to, schema_from);
+    PROD_FUNCTION_DELETE(schema_to, schema_from);
+    PROD_FUNCTION_DELETE_CREATE(schema_to, schema_from);
+    PROD_INDEX_CREATE(schema_to, schema_from);
+    PROD_INDEX_DELETE(schema_to, schema_from);
+    DBMS_OUTPUT.PUT_LINE('-------------');
+END;
+
+
+CALL GENERATE_DEPLOY_SCRIPT('DEV', 'PROD');
 
 ----dev-----
 CREATE USER dev IDENTIFIED BY admin;
