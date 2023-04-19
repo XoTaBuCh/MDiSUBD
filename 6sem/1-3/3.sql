@@ -306,8 +306,6 @@ END;
 create or replace procedure GET_TABLES_ORDER(schema_name in varchar2) as
 begin
     EXECUTE IMMEDIATE 'TRUNCATE TABLE fk_table';
-    dbms_output.put_line('Showing tables order in schema');
-
     FOR schema_table IN (SELECT tables1.table_name name
                          FROM all_tables tables1
                          WHERE OWNER = schema_name)
@@ -337,7 +335,9 @@ begin
                 SET PRIORITY = fk_cur.level_3
                 WHERE DDL_TABLE.TABLE_NAME = fk_cur.CHILD;
             ELSE
-                dbms_output.put_line('CYCLE IN TABLE' || fk_cur.CHILD);
+                dbms_output.put_line('CYCLED TABLE' || fk_cur.CHILD);
+                dbms_output.put_line('----------------');
+
             END IF;
         END LOOP;
 end GET_TABLES_ORDER;
@@ -360,7 +360,7 @@ CREATE TABLE fk_table
 );
 
 
-CREATE OR REPLACE PROCEDURE GENERATE_DEPLOY_SCRIPT(schema_to VARCHAR2, schema_from VARCHAR2)
+CREATE OR REPLACE PROCEDURE GENERATE_SCRIPT(schema_to VARCHAR2, schema_from VARCHAR2)
     AUTHID CURRENT_USER
     IS
 BEGIN
@@ -384,13 +384,34 @@ BEGIN
     PROD_FUNCTION_CREATE(schema_to, schema_from);
     PROD_FUNCTION_DELETE(schema_to, schema_from);
     PROD_FUNCTION_DELETE_CREATE(schema_to, schema_from);
-    PROD_INDEX_CREATE(schema_to, schema_from);
-    PROD_INDEX_DELETE(schema_to, schema_from);
+    --PROD_INDEX_CREATE(schema_to, schema_from);
+    --PROD_INDEX_DELETE(schema_to, schema_from);
     DBMS_OUTPUT.PUT_LINE('-------------');
 END;
 
 
-CALL GENERATE_DEPLOY_SCRIPT('DEV', 'PROD');
+CALL GENERATE_SCRIPT('DEV', 'PROD');
+
+----clear----
+DECLARE
+  CURSOR CC IS
+  SELECT * FROM ALL_OBJECTS WHERE OWNER='PROD';
+
+BEGIN
+
+      FOR I IN 1..5 LOOP
+            FOR II IN CC LOOP
+           BEGIN
+            EXECUTE IMMEDIATE 'DROP '||II.OBJECT_TYPE||' '||II.OWNER||'.'||II.OBJECT_NAME;
+              DBMS_OUTPUT.PUT_LINE(II.OBJECT_TYPE||' '||II.OWNER||'.'||II.OBJECT_NAME);
+
+              EXCEPTION WHEN OTHERS THEN
+                    NULL;
+           END;
+         END LOOP;
+      END LOOP;
+
+END;
 
 ----dev-----
 CREATE USER dev IDENTIFIED BY admin;
@@ -410,6 +431,12 @@ CREATE TABLE DEV.TABLE1
     aboba VARCHAR2(59) not null,
     CONSTRAINT table1_pk PRIMARY KEY (id)
 );
+CREATE TABLE PROD.TABLE1
+(
+    id    NUMBER       not null,
+    aboba VARCHAR2(59) not null,
+    CONSTRAINT table1_pk PRIMARY KEY (id)
+);
 DROP TABLE DEV.TABLE2;
 CREATE TABLE DEV.TABLE2
 (
@@ -417,7 +444,7 @@ CREATE TABLE DEV.TABLE2
     aboba VARCHAR2(59) not null,
     CONSTRAINT table2_pk PRIMARY KEY (id)
 );
-
+DROP TABLE PROD.TABLE1;
 CREATE TABLE PROD.TABLE1
 (
     id     NUMBER       not null,
@@ -463,7 +490,7 @@ CREATE TABLE DEV.CYCLE
     id NUMBER(10) not null,
 
     CONSTRAINT pk PRIMARY KEY (id),
-    CONSTRAINT fk FOREIGN KEY (id) REFERENCES DEV.CYCLE (id)
+    CONSTRAINT fk_cycle FOREIGN KEY (id) REFERENCES DEV.CYCLE (id)
 );
 ----procedures----
 CREATE OR REPLACE PROCEDURE DEV.proc1(a VARCHAR2)
@@ -472,7 +499,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(a);
 END;
 
-CREATE OR REPLACE PROCEDURE PROD.proc1(a VARCHAR2)
+CREATE OR REPLACE PROCEDURE PROD.proc1(a VARCHAR)
     IS
 BEGIN
     DBMS_OUTPUT.PUT_LINE(a);
@@ -512,5 +539,6 @@ BEGIN
     RETURN 5;
 END;
 ----indexes----
+drop index dev.some_index;
 CREATE INDEX dev.some_index
     ON dev.TABLE1 (aboba);
