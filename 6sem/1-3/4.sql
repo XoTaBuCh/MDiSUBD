@@ -87,12 +87,15 @@ CREATE OR REPLACE PACKAGE BODY JSON_PARSER IS
         operation := UPPER(l_object.get_string('OPERATOR'));
         res := CASE
                    WHEN
-                       operation in ('=', '!=', '<>', '<', '>', '>=', '<=')
+                       operation in ('=', '!=', '<>', '<', '>', '>=', '<=', 'LIKE')
                        THEN Make_Operation(Parse_Arg(l_object.get('LHS')), Parse_Arg(l_object.get('RHS')), operation)
                    WHEN operation in ('IN', 'NOT IN') THEN Make_Operation(Parse_Arg(l_object.get('LHS')), '(' ||
                                                                                                           Parse_Array_Args(l_object.get_array('RHS'), ', ') ||
                                                                                                           ')',
                                                                           operation)
+                   WHEN operation in ('BETWEEN')
+                       THEN Make_Operation(Parse_Arg(l_object.get('LHS')), Parse_Array_Args(l_object.get_array('RHS'), ' AND '),
+                                           operation)
                    WHEN operation in ('EXISTS', 'NOT EXISTS')
                        THEN operation || ' (' || Parse_Arg(l_object.get('RHS')) || ')'
                    ELSE ex
@@ -241,7 +244,7 @@ CREATE OR REPLACE PACKAGE BODY JSON_PARSER IS
         return res_str;
     END;
 
-    FUNCTION Get_COLUMS_TO_CLOB(l_json_array JSON_ARRAY_T) RETURN CLOB
+    FUNCTION Get_COLUMNS_TO_CLOB(l_json_array JSON_ARRAY_T) RETURN CLOB
         IS
         UNKNOWN_UPDATE EXCEPTION;
         PRAGMA exception_init (UNKNOWN_UPDATE , -20004 );
@@ -365,8 +368,8 @@ CREATE OR REPLACE PACKAGE BODY JSON_PARSER IS
 
     FUNCTION Get_Drop_Trigger_From_JSON_Object(l_object JSON_OBJECT_T) RETURN CLOB
         IS
-        trigger_name_t  CLOB;
-        res_str         CLOB;
+        trigger_name_t CLOB;
+        res_str        CLOB;
     BEGIN
         trigger_name_t := l_object.get_string('NAME');
         res_str := TO_CLOB('DROP TRIGGER ' || trigger_name_t);
@@ -454,293 +457,185 @@ CREATE OR REPLACE PACKAGE BODY JSON_PARSER IS
     END;
 END JSON_PARSER;
 
+----Методы----
+DROP TYPE clobs_array;
+
+CREATE OR REPLACE TYPE clobs_array IS TABLE OF CLOB;
+
+CREATE OR REPLACE FUNCTION DO_PARSE(l_object JSON_OBJECT_T) RETURN clobs_array
+    IS
+    l_array   json_array_t;
+    str_array clobs_array := clobs_array();
+    counter   integer;
+BEGIN
+    IF l_object.has('START') = TRUE THEN
+        l_array := l_object.get_array('START');
+        FOR counter in 0..(l_array.get_size() - 1)
+            LOOP
+                str_array.extend();
+                str_array(str_array.COUNT) := JSON_PARSER.Parse_Arg(l_array.get(counter));
+            END LOOP;
+    ELSE
+        str_array.extend();
+        str_array(str_array.COUNT) := JSON_PARSER.Parse_Arg(l_object);
+    END IF;
+    return str_array;
+END;
+
+CREATE OR REPLACE FUNCTION Get_Cursor_By(l_object JSON_OBJECT_T) RETURN SYS_REFCURSOR
+    IS
+    res_cur   SYS_REFCURSOR;
+    str_array clobs_array;
+    counter   integer;
+BEGIN
+    str_array := DO_PARSE(l_object);
+    FOR counter in 1..str_array.COUNT
+        LOOP
+            OPEN res_cur for str_array(counter);
+        END LOOP;
+    return res_cur;
+END;
+
+CREATE OR REPLACE PROCEDURE Invoke_By(l_object JSON_OBJECT_T)
+    IS
+    str_array clobs_array;
+    counter   integer;
+BEGIN
+    str_array := DO_PARSE(l_object);
+    FOR counter in 1..str_array.COUNT
+        LOOP
+            DBMS_OUTPUT.PUT_LINE(str_array(counter) || ';');
+            --EXECUTE IMMEDIATE str_array(counter);
+        END LOOP;
+END;
+
+CREATE OR REPLACE FUNCTION Try_Get_Cursor_By(l_object JSON_OBJECT_T) RETURN SYS_REFCURSOR
+    IS
+    res SYS_REFCURSOR;
+BEGIN
+    res := Get_Cursor_By(l_object);
+    return res;
+EXCEPTION
+    WHEN OTHERS THEN
+        Invoke_By(l_object);
+        OPEN res FOR
+            select * from dual where 1 = 2;
+        return res;
+END;
+
 ----Examples----
 
-CREATE TABLE YourTable(
-    CODE INTEGER,
-    VAL INTEGER
-);
-
-DECLARE
-    l_object JSON_OBJECT_T;
-    cur      SYS_REFCURSOR;
-    CODE     integer;
-    VAL      integer;
-BEGIN
-    l_object := JSON_OBJECT_T.Parse(
-            '{
-                "SELECT": {
-                    "TABLE_NAME": "YourTable",
-                    "VALUES": [
-                        "CODE",
-                        "Val"
-                    ],
-                    "WHERE": [
-                        {
-                            "LHS": "CODE",
-                            "RHS": {
-                                "TYPE": "INTEGER",
-                                "VALUE": 5
-                            },
-                            "OPERATOR": "="
-                        },
-                        {
-                            "SEPARATOR": "OR"
-                        },
-                        {
-                            "OPERATOR": "EXISTS",
-                            "RHS": {
-                                "SELECT": {
-                                    "TABLE_NAME": "YourTable",
-                                    "VALUES": [
-                                        "CODE",
-                                        "Val"
-                                    ],
-                                    "WHERE": [
-                                        {
-                                            "LHS": "CODE",
-                                            "RHS": [
-                                                {
-                                                    "TYPE": "INTEGER",
-                                                    "VALUE": 9996
-                                                },
-                                                {
-                                                    "TYPE": "INTEGER",
-                                                    "VALUE": 9997
-                                                },
-                                                {
-                                                    "TYPE": "INTEGER",
-                                                    "VALUE": 9998
-                                                },
-                                                {
-                                                    "TYPE": "INTEGER",
-                                                    "VALUE": 9999
-                                                },
-                                                {
-                                                    "TYPE": "INTEGER",
-                                                    "VALUE": 10000
-                                                }
-                                            ],
-                                            "OPERATOR": "NOT IN"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    ]
-                }
-            }');
-    DBMS_OUTPUT.PUT_LINE('check');
-    DBMS_OUTPUT.PUT_LINE(JSON_PARSER.Parse_Arg(l_object));
-    cur := TRY_Get_Cursor_By(l_object);
-    LOOP
-        FETCH cur INTO CODE, VAL;
-        EXIT WHEN cur%notfound;
-        DBMS_OUTPUT.put_line(code || ' ' || val);
-    END LOOP;
-    close cur;
-END;
-
-
-SELECT *
-FROM YourTable;
-
 DECLARE
     l_object JSON_OBJECT_T;
     cur      SYS_REFCURSOR;
 BEGIN
     l_object := JSON_OBJECT_T.Parse(
             '{
-                "INSERT": {
-                    "TABLE_NAME": "YourTable",
-                    "VALUES": {
-                        "VAL": {
-                            "VALUE": 6,
-                            "TYPE": "INTEGER"
-                        }
-                    }
-                }
-            }');
-    DBMS_OUTPUT.PUT_LINE('check');
-    DBMS_OUTPUT.PUT_LINE(JSON_PARSER.Parse_Arg(l_object));
-    cur := Try_Get_Cursor_By(l_object);
-    close cur;
-END;
-
-DECLARE
-    l_object JSON_OBJECT_T;
-    cur      SYS_REFCURSOR;
-BEGIN
-    l_object := JSON_OBJECT_T.Parse(
-            '{
-                "UPDATE": {
-                    "TABLE_NAME": "YourTable",
-                    "VALUES": [
-                        {
-                            "LHS": "VAL",
-                            "RHS": {
-                                "VALUE": 1000,
-                                "TYPE": "INTEGER"
-                            }
-                        }
-                    ],
-                    "WHERE":[
-                        {
-                            "LHS": "CODE",
-                            "RHS": {
-                                "VALUE": 10002,
-                                "TYPE": "INTEGER"
-                            },
-                            "OPERATOR": "="
-                        }
-                    ]
-                }
-            }');
-    DBMS_OUTPUT.PUT_LINE('check');
-    DBMS_OUTPUT.PUT_LINE(JSON_PARSER.Parse_Arg(l_object));
-    cur := Try_Get_Cursor_By(l_object);
-    close cur;
-END;
-
-
-
-DECLARE
-    l_object JSON_OBJECT_T;
-    cur      SYS_REFCURSOR;
-BEGIN
-    l_object := JSON_OBJECT_T.Parse(
-            '{
-                "DELETE": {
-                    "TABLE_NAME": "YourTable"
-                }
-            }');
-    DBMS_OUTPUT.PUT_LINE('check');
-    cur := Try_Get_Cursor_By(l_object);
-    close cur;
-END;
-
-select *
-from yourtable;
-
-
-
-DECLARE
-    l_object JSON_OBJECT_T;
-    cur      SYS_REFCURSOR;
-BEGIN
-    l_object := JSON_OBJECT_T.Parse(
-            '{
-                "START":[
-                    {
-                        "CREATE": {
-                            "TYPE": "TABLE",
-                            "VALUES": {
-                                "NAME": "MyTableTEST",
-                                "COLUMS": [
-                                    {
-                                        "NAME": "CODE",
-                                        "TYPE": "INTEGER",
-                                        "OTHER": [
-                                            "NOT NULL"
-                                        ]
-                                    },
-                                    {
-                                        "NAME": "NAME",
-                                        "TYPE": "VARCHAR(20)"
-                                    }
-                                ]
-                            }
-                        }
+  "START": [
+    {
+      "CREATE": {
+        "TYPE": "TABLE",
+        "VALUES": {
+          "NAME": "T1",
+          "COLUMS": [
+            {
+              "NAME": "ID",
+              "TYPE": "NUMBER",
+              "OTHER": [
+                "NOT NULL"
+              ]
+            },
+            {
+              "NAME": "NAME",
+              "TYPE": "VARCHAR2"
+            },
+            {
+              "NAME": "VAL",
+              "TYPE": "INTEGER"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "CREATE": {
+        "TYPE": "TABLE",
+        "VALUES": {
+          "NAME": "T2",
+          "COLUMS": [
+            {
+              "NAME": "ID",
+              "TYPE": "NUMBER",
+              "OTHER": [
+                "NOT NULL"
+              ]
+            },
+            {
+              "NAME": "NAME",
+              "TYPE": "VARCHAR2"
+            },
+            {
+              "NAME": "VAL",
+              "TYPE": "INTEGER"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "SELECT":
+      {
+        "TABLE_NAME": "T1",
+        "VALUES":
+        [
+          "*"
+        ],
+        "WHERE":
+        [
+          {
+            "LHS": "ID",
+            "OPERATOR": "IN",
+            "RHS": [{
+              "SELECT":
+              {
+                "TABLE_NAME": "T2",
+                "VALUES":
+                [
+                  "ID"
+                ],
+                "WHERE": [
+                  {
+                    "LHS": "NAME",
+                    "OPERATOR": "LIKE",
+                    "RHS": "%a%"
+                  },
+                  {
+                    "SEPARATOR": "AND"
+                  },
+                  {
+                    "LHS": "VAL",
+                    "OPERATOR": "BETWEEN",
+                    "RHS": [
+                      {
+                        "VALUE": 4,
+                        "TYPE": "INTEGER"
                     },
                     {
-                        "CREATE": {
-                            "TYPE": "SEQUENCE",
-                            "VALUES": {
-                                "NAME": "MyTableTEST_SEQ"
-                            }
-                        }
-                    },
-                    {
-                        "CREATE": {
-                            "TYPE": "TRIGGER",
-                            "VALUES": {
-                                "NAME": "MyTableTEST_Trigger",
-                                "TYPE_WHEN": "Before",
-                                "EVENT": "insert",
-                                "TABLE_NAME": "MyTableTEST",
-                                "OTHER_OPTIONS": [
-                                    "FOR EACH ROW"
-                                ],
-                            "DO": [
-                                {
-                                    "SELECT": {
-                                        "TABLE_NAME": "dual",
-                                        "VALUES": [
-                                            "MyTableTEST_SEQ.NEXTVAL"
-                                        ],
-                                        "INTO": [
-                                            ":new.Code"
-                                        ]
-                                    }
-                                }
-                            ]
-                            }
-                        }
-                    }
+                      "VALUE": 5,
+                      "TYPE": "INTEGER"
+                    }]
+                  }
                 ]
-            }');
-    DBMS_OUTPUT.PUT_LINE('check');
-    DBMS_OUTPUT.PUT_LINE(JSON_PARSER.Parse_Arg(l_object.get('START')));
+              }
+            }]
+          }
+        ]
+      }
+    }
+  ]
+}');
     cur := Try_Get_Cursor_By(l_object);
-    close cur;
-END;
 
-
-select *
-from MYTABLETEST;
-
-
-
-INSERT INTO MYTABLETEST(NAME)
-VALUES ('dfdsfsd');
-
-
-DECLARE
-    l_object JSON_OBJECT_T;
-    cur      SYS_REFCURSOR;
-BEGIN
-    l_object := JSON_OBJECT_T.Parse(
-            '{
-                "START":[
-                    {
-                        "DROP": {
-                            "TYPE": "TRIGGER",
-                            "VALUES": {
-                                "NAME": "MyTableTEST_Trigger"
-                            }
-                        }
-                    },
-                    {
-                        "DROP": {
-                            "TYPE": "TABLE",
-                            "VALUES": {
-                                "NAME": "MyTableTEST"
-                            }
-                        }
-                    },
-                    {
-                        "DROP": {
-                            "TYPE": "SEQUENCE",
-                            "VALUES": {
-                                "NAME": "MyTableTEST_SEQ"
-                            }
-                        }
-                    }
-                ]
-            }');
-    DBMS_OUTPUT.PUT_LINE('check');
-    DBMS_OUTPUT.PUT_LINE(JSON_PARSER.Parse_Arg(l_object.get('START')));
-    cur := Try_Get_Cursor_By(l_object);
     close cur;
 END;
 
