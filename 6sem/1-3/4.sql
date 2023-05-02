@@ -88,14 +88,16 @@ CREATE OR REPLACE PACKAGE BODY PARSER IS
         res := CASE
                    WHEN
                        operation in ('=', '!=', '<>', '<', '>', '>=', '<=', 'LIKE')
-                       THEN CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')), PARSE_OBJECTS(l_object.get('RHS')), operation)
+                       THEN CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')), PARSE_OBJECTS(l_object.get('RHS')),
+                                             operation)
                    WHEN operation in ('IN', 'NOT IN') THEN CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')), '(' ||
-                                                                                                          PARSE_ARRAYS(l_object.get_array('RHS'), ', ') ||
-                                                                                                          ')',
-                                                                          operation)
+                                                                                                                PARSE_ARRAYS(l_object.get_array('RHS'), ', ') ||
+                                                                                                                ')',
+                                                                            operation)
                    WHEN operation in ('BETWEEN')
-                       THEN CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')), PARSE_ARRAYS(l_object.get_array('RHS'), ' AND '),
-                                           operation)
+                       THEN CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')),
+                                             PARSE_ARRAYS(l_object.get_array('RHS'), ' AND '),
+                                             operation)
                    WHEN operation in ('EXISTS', 'NOT EXISTS')
                        THEN operation || ' (' || PARSE_OBJECTS(l_object.get('RHS')) || ')'
                    ELSE ex
@@ -200,12 +202,14 @@ CREATE OR REPLACE PACKAGE BODY PARSER IS
             LOOP
                 l_object := JSON_OBJECT_T(l_json_array.get(counter));
                 IF isFirst = TRUE THEN
-                    temp_str := CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')), PARSE_OBJECTS(l_object.get('RHS')), '=');
+                    temp_str := CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')), PARSE_OBJECTS(l_object.get('RHS')),
+                                                 '=');
                     isFirst := FALSE;
                 ELSE
                     temp_str := CONCAT(', ',
-                                       CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')), PARSE_OBJECTS(l_object.get('RHS')),
-                                                      '='));
+                                       CREATE_OPERATION(PARSE_OBJECTS(l_object.get('LHS')),
+                                                        PARSE_OBJECTS(l_object.get('RHS')),
+                                                        '='));
                 END IF;
                 res := CONCAT(res, temp_str);
             END LOOP;
@@ -532,56 +536,7 @@ BEGIN
     l_object := JSON_OBJECT_T.Parse(
             '{
   "START": [
-    {
-      "CREATE": {
-        "TYPE": "TABLE",
-        "VALUES": {
-          "NAME": "T1",
-          "COLUMS": [
-            {
-              "NAME": "ID",
-              "TYPE": "NUMBER",
-              "OTHER": [
-                "NOT NULL"
-              ]
-            },
-            {
-              "NAME": "NAME",
-              "TYPE": "VARCHAR2"
-            },
-            {
-              "NAME": "VAL",
-              "TYPE": "INTEGER"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "CREATE": {
-        "TYPE": "TABLE",
-        "VALUES": {
-          "NAME": "T2",
-          "COLUMS": [
-            {
-              "NAME": "ID",
-              "TYPE": "NUMBER",
-              "OTHER": [
-                "NOT NULL"
-              ]
-            },
-            {
-              "NAME": "NAME",
-              "TYPE": "VARCHAR2"
-            },
-            {
-              "NAME": "VAL",
-              "TYPE": "INTEGER"
-            }
-          ]
-        }
-      }
-    },
+
     {
       "SELECT":
       {
@@ -607,21 +562,21 @@ BEGIN
                   {
                     "LHS": "NAME",
                     "OPERATOR": "LIKE",
-                    "RHS": "%a%"
+                    "RHS": ''%a%''
                   },
                   {
                     "SEPARATOR": "AND"
                   },
                   {
-                    "LHS": "VAL",
+                    "LHS": "NUM",
                     "OPERATOR": "BETWEEN",
                     "RHS": [
                       {
-                        "VALUE": 4,
+                        "VALUE": 2,
                         "TYPE": "INTEGER"
                     },
                     {
-                      "VALUE": 5,
+                      "VALUE": 4,
                       "TYPE": "INTEGER"
                     }]
                   }
@@ -639,3 +594,36 @@ BEGIN
     close cur;
 END;
 
+CREATE OR REPLACE DIRECTORY DIR AS 'D:\MDiSUBD\6sem\1-3';
+
+
+DECLARE
+    file     UTL_FILE.FILE_TYPE;
+    text     CLOB;
+    temp     CLOB;
+    l_object JSON_OBJECT_T;
+    cur      SYS_REFCURSOR;
+
+
+DECLARE
+    file_handle UTL_FILE.FILE_TYPE;
+    clob_data   CLOB;
+    buffer      VARCHAR2(32767);
+    amount      INTEGER := 32767;
+    l_object    JSON_OBJECT_T;
+
+BEGIN
+    file_handle := UTL_FILE.FOPEN('DIR', 'query.json', 'R');
+    DBMS_LOB.CREATETEMPORARY(clob_data, TRUE);
+    LOOP
+        UTL_FILE.GET_LINE(file_handle, buffer, amount);
+        DBMS_LOB.WRITEAPPEND(clob_data, LENGTH(buffer), buffer);
+        EXIT WHEN buffer = '}';
+    END LOOP;
+    UTL_FILE.FCLOSE(file_handle);
+    l_object = JSON_OBJECT_T.Parse(clob_data);
+    cur := Try_Get_Cursor_By(l_object);
+
+    close cur;
+
+END;

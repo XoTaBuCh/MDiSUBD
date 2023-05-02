@@ -1,0 +1,102 @@
+{
+  "START": [
+    {
+      "CREATE": {
+        "TYPE": "TABLE",
+        "VALUES": {
+          "NAME": "T1",
+          "COLUMS": [
+            {
+              "NAME": "ID",
+              "TYPE": "NUMBER",
+              "OTHER": [
+                "NOT NULL"
+              ]
+            },
+            {
+              "NAME": "NAME",
+              "TYPE": "VARCHAR2"
+            },
+            {
+              "NAME": "VAL",
+              "TYPE": "INTEGER"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "CREATE": {
+        "TYPE": "TABLE",
+        "VALUES": {
+          "NAME": "T2",
+          "COLUMS": [
+            {
+              "NAME": "ID",
+              "TYPE": "NUMBER",
+              "OTHER": [
+                "NOT NULL"
+              ]
+            },
+            {
+              "NAME": "NAME",
+              "TYPE": "VARCHAR2"
+            },
+            {
+              "NAME": "VAL",
+              "TYPE": "INTEGER"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "SELECT": {
+        "TABLE_NAME": "T1",
+        "VALUES": [
+          "*"
+        ],
+        "WHERE": [
+          {
+            "LHS": "ID",
+            "OPERATOR": "IN",
+            "RHS": [
+              {
+                "SELECT": {
+                  "TABLE_NAME": "T2",
+                  "VALUES": [
+                    "ID"
+                  ],
+                  "WHERE": [
+                    {
+                      "LHS": "NAME",
+                      "OPERATOR": "LIKE",
+                      "RHS": "%a%"
+                    },
+                    {
+                      "SEPARATOR": "AND"
+                    },
+                    {
+                      "LHS": "VAL",
+                      "OPERATOR": "BETWEEN",
+                      "RHS": [
+                        {
+                          "VALUE": 4,
+                          "TYPE": "INTEGER"
+                        },
+                        {
+                          "VALUE": 5,
+                          "TYPE": "INTEGER"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
