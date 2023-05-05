@@ -378,8 +378,7 @@ as
     my_file  UTL_FILE.FILE_TYPE;
 begin
 
-    v_result := '<h1>Customers:</h1>
-                ';
+    v_result := '<h1>Customers:</h1>' || CHR(10);
 
     select count(*)
     into u_count
@@ -402,9 +401,9 @@ begin
     i_count := i_count - u_count;
     d_count := d_count - u_count;
 
-    v_result := v_result || '<h2 style="color:green">   Insert: ' || i_count || '</h2>
-                             <h2 style="color:orange">   Update: ' || u_count || '</h2>
-                             <h2 style="color:red">   Delete: ' || d_count || '</h2>';
+    v_result := v_result || '<h2 style="color:green">   Insert: ' || i_count || '</h2>' || CHR(10) ||
+                '<h2 style="color:orange">   Update: ' || u_count || '</h2>' || CHR(10) ||
+                '<h2 style="color:red">   Delete: ' || d_count || '</h2>' || CHR(10);
 
     select count(*)
     into u_count
@@ -427,11 +426,10 @@ begin
     i_count := i_count - u_count;
     d_count := d_count - u_count;
 
-    v_result := v_result || '<h1>Medicines:</h1>
-                             <h2 style="color:green">   Insert: ' || i_count || '</h2>
-                             <h2 style="color:orange">   Update: ' || u_count || '</h2>
-                             <h2 style="color:red">   Delete: ' || d_count || '</h2>
-                             ';
+    v_result := v_result || '<h1>Medicines:</h1>' || CHR(10) ||
+                '<h2 style="color:green">   Insert: ' || i_count || '</h2>' || CHR(10) ||
+                '<h2 style="color:orange">   Update: ' || u_count || '</h2>' || CHR(10) ||
+                '<h2 style="color:red">   Delete: ' || d_count || '</h2>' || CHR(10);
 
     select count(*)
     into u_count
@@ -454,10 +452,10 @@ begin
     i_count := i_count - u_count;
     d_count := d_count - u_count;
 
-    v_result := v_result || '<h1>Orders:</h1>
-                             <h2 style="color:green">   Insert: ' || i_count || '</h2>
-                             <h2 style="color:orange">   Update: ' || u_count || '</h2>
-                             <h2 style="color:red">   Delete: ' || d_count || '</h2>';
+    v_result := v_result || '<h1>Orders:</h1>' || CHR(10) ||
+                '<h2 style="color:green">   Insert: ' || i_count || '</h2>' || CHR(10) ||
+                '<h2 style="color:orange">   Update: ' || u_count || '</h2>' || CHR(10) ||
+                '<h2 style="color:red">   Delete: ' || d_count || '</h2>' || CHR(10);
     my_file := UTL_FILE.FOPEN('MY_DIR', 'report.html', 'w');
     UTL_FILE.PUT_LINE(my_file, v_result);
     UTL_FILE.FCLOSE(my_file);
